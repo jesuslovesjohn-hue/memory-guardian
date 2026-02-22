@@ -1,0 +1,23 @@
+{
+  "name": "memory-guardian",
+  "version": "1.0.0",
+  "description": "四層防護上下文記憶系統 for OpenClaw",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "faiss-node": "^0.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "openclaw": {
+    "extensions": ["./src/index.ts"]
+  }
+}

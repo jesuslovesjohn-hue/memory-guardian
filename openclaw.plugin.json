@@ -1,0 +1,60 @@
+{
+  "id": "memory-guardian",
+  "name": "Memory Guardian",
+  "version": "1.0.0",
+  "description": "四層防護上下文記憶系統：心跳摘要、反遺忘注入、FAISS 向量檢索、無感 RAG",
+  "author": "小賀同學",
+  "homepage": "https://github.com/openclaw/memory-guardian",
+  "entry": "./src/index.ts",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "summarizeIntervalMs": {
+        "type": "number",
+        "default": 3600000,
+        "description": "心跳摘要間隔（毫秒），默認 1 小時"
+      },
+      "ragTopK": {
+        "type": "number",
+        "default": 5,
+        "description": "RAG 檢索返回的最相關文本數量"
+      },
+      "chunkSize": {
+        "type": "number",
+        "default": 512,
+        "description": "文本切塊大小（字符）"
+      },
+      "chunkOverlap": {
+        "type": "number",
+        "default": 64,
+        "description": "切塊重疊長度"
+      },
+      "recentMessagesCount": {
+        "type": "number",
+        "default": 30,
+        "description": "反遺忘注入時提取的最近消息數量"
+      },
+      "embeddingModel": {
+        "type": "string",
+        "default": "Xenova/all-MiniLM-L6-v2",
+        "description": "Embedding 模型名稱"
+      },
+      "localLlmEndpoint": {
+        "type": "string",
+        "default": "http://localhost:11434/api/generate",
+        "description": "本地 LLM API 端點（Ollama 格式）"
+      },
+      "localLlmModel": {
+        "type": "string",
+        "default": "qwen2.5:7b",
+        "description": "本地 LLM 模型名稱"
+      }
+    }
+  },
+  "uiHints": {
+    "summarizeIntervalMs": { "label": "摘要間隔 (ms)" },
+    "ragTopK": { "label": "RAG Top-K" },
+    "localLlmEndpoint": { "label": "本地 LLM 端點", "placeholder": "http://localhost:11434/api/generate" }
+  }
+}
