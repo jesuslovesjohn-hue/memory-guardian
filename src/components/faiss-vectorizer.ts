@@ -238,7 +238,7 @@ export class FaissVectorizerService {
       this.api.logger.debug(`[FaissVectorizer] 已索引 ${ids.length} 個切塊，來源: ${task.sourcePath}`);
 
     } catch (error) {
-      this.api.logger.error(`[FaissVectorizer] 處理任務失敗: ${task.id}`, error);
+      this.api.logger.error(`[FaissVectorizer] 處理任務失敗: ${task.id}` + ": " + String(error));
     }
   }
 
@@ -300,7 +300,7 @@ export class FaissVectorizerService {
 
         indexed++;
       } catch (error) {
-        this.api.logger.error(`[FaissVectorizer] 索引文件失敗: ${file}`, error);
+        this.api.logger.error(`[FaissVectorizer] 索引文件失敗: ${file}` + ": " + String(error));
         errors++;
       }
     }

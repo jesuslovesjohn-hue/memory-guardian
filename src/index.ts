@@ -47,9 +47,22 @@ function mergeConfig(userConfig: Partial<MemoryGuardianConfig> = {}): MemoryGuar
 
 /**
  * 獲取 workspace 目錄
+ * 優先使用當前 agent 的 workspace，回退到默認目錄
  */
 function getWorkspaceDir(api: PluginApi): string {
-  // 回退到默認目錄
+  // 嘗試從 API 獲取當前 agent 的 workspace
+  try {
+    const agentWorkspace = (api as any).getAgentWorkspace?.() 
+      || (api as any).agentWorkspace 
+      || (api as any).workspace;
+    if (agentWorkspace) {
+      return agentWorkspace;
+    }
+  } catch (e) {
+    // 忽略錯誤，使用回退
+  }
+  
+  // 回退到默認目錄（僅適用於 main/main-lite）
   const home = process.env.HOME || process.env.USERPROFILE || '~';
   return join(home, '.openclaw', 'workspace');
 }
@@ -88,18 +101,24 @@ export function register(api: PluginApi): void {
   // ============================================================
   // 註冊 Session Protect Hook (攔截 /new, /reset)
   try {
-    api.registerHook(['command:new', 'command:reset'], sessionProtectHandler);
-    api.logger.info('[MemoryGuardian] Session Protect Hook 已註冊');
+    // 使用 .on() 方法註冊 command 事件
+    (api as any).on('command:new', (event: any) => sessionProtectHandler({ ...event, type: 'command', action: 'new' }));
+    (api as any).on('command:reset', (event: any) => sessionProtectHandler({ ...event, type: 'command', action: 'reset' }));
+    api.logger.info('[MemoryGuardian] Session Protect Hook 已註冊 (command:new, command:reset)');
   } catch (error) {
-    api.logger.error('[MemoryGuardian] 註冊 Session Protect Hook 失敗:', error);
+    api.logger.error('[MemoryGuardian] 註冊 Session Protect Hook 失敗:' + ": " + String(error));
   }
 
   // 註冊 Bootstrap Inject Hook (新 session 啟動時注入上下文)
   try {
-    api.registerHook(['agent:bootstrap'], bootstrapInjectHandler);
+    // @ts-ignore - OpenClaw API 支援 opts.name 但 types 未更新
+    api.registerHook(['agent:bootstrap'], bootstrapInjectHandler, {
+      name: 'mg-bootstrap-inject',
+      description: '新 session 啟動時注入 critical_context'
+    });
     api.logger.info('[MemoryGuardian] Bootstrap Inject Hook 已註冊');
   } catch (error) {
-    api.logger.error('[MemoryGuardian] 註冊 Bootstrap Inject Hook 失敗:', error);
+    api.logger.error('[MemoryGuardian] 註冊 Bootstrap Inject Hook 失敗:' + ": " + String(error));
   }
 
   // 註冊 RAG Inject Hook (每次回覆前自動 RAG)
@@ -107,7 +126,7 @@ export function register(api: PluginApi): void {
     (api as any).on('before_prompt_build', ragInjectHandler);
     api.logger.info('[MemoryGuardian] RAG Inject Hook 已註冊');
   } catch (error) {
-    api.logger.error('[MemoryGuardian] 註冊 RAG Inject Hook 失敗:', error);
+    api.logger.error('[MemoryGuardian] 註冊 RAG Inject Hook 失敗:' + ": " + String(error));
   }
 
   // ============================================================

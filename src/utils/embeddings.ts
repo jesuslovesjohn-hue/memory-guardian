@@ -4,17 +4,17 @@
  * 產生 384 維特徵向量
  */
 
-import { pipeline, type Pipeline } from '@xenova/transformers';
+import { pipeline } from '@xenova/transformers';
 
-// Singleton pipeline instance
-let embeddingPipeline: Pipeline | null = null;
-let initPromise: Promise<Pipeline> | null = null;
+// Singleton pipeline instance - use any to avoid type mismatch
+let embeddingPipeline: any = null;
+let initPromise: Promise<any> | null = null;
 
 /**
  * 初始化 embedding pipeline
  * 使用 singleton 模式避免重複加載模型
  */
-export async function initEmbeddings(modelName: string = 'Xenova/all-MiniLM-L6-v2'): Promise<Pipeline> {
+export async function initEmbeddings(modelName: string = 'Xenova/all-MiniLM-L6-v2'): Promise<any> {
   if (embeddingPipeline) {
     return embeddingPipeline;
   }

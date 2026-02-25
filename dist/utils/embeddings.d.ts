@@ -3,12 +3,11 @@
  * 使用 @xenova/transformers 本地運行 all-MiniLM-L6-v2 模型
  * 產生 384 維特徵向量
  */
-import { type Pipeline } from '@xenova/transformers';
 /**
  * 初始化 embedding pipeline
  * 使用 singleton 模式避免重複加載模型
  */
-export declare function initEmbeddings(modelName?: string): Promise<Pipeline>;
+export declare function initEmbeddings(modelName?: string): Promise<any>;
 /**
  * 將單個文本轉換為 384 維向量
  * @param text 輸入文本

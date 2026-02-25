@@ -102,10 +102,19 @@ function extractUserQuery(event: BeforePromptBuildEvent): string | null {
   return null;
 }
 
+// 只對這些 agents 啟用 RAG 注入（其他 agents 有自己嘅 workspace 同身份）
+const ALLOWED_AGENTS = ['main', 'main-lite'];
+
 const handler: BeforePromptBuildHandler = async (event, ctx) => {
   const startTime = Date.now();
   
   try {
+    // 檢查是否為允許的 agent
+    if (!ALLOWED_AGENTS.includes(ctx.agentId)) {
+      console.log(`[rag-inject] 跳過 agent "${ctx.agentId}"（只對 main/main-lite 啟用）`);
+      return;
+    }
+
     // 提取用戶查詢
     const userQuery = extractUserQuery(event);
     

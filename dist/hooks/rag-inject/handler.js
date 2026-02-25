@@ -16,13 +16,26 @@ let lastResult = null;
 let lastTimestamp = 0;
 const CACHE_TTL = 5000; // 5 秒緩存
 /**
- * 格式化 RAG 結果為 XML
+ * 格式化 RAG 結果為 XML（含去重）
  */
 function formatRagResultsXml(results) {
     if (results.length === 0) {
         return '';
     }
-    const items = results.map((r, idx) => {
+    // 去重：按 text 內容去重，保留相關度最高的
+    const seen = new Set();
+    const dedupedResults = results.filter(r => {
+        const textKey = r.chunk.text.trim().substring(0, 200); // 用前200字符作為key
+        if (seen.has(textKey)) {
+            return false;
+        }
+        seen.add(textKey);
+        return true;
+    });
+    if (dedupedResults.length === 0) {
+        return '';
+    }
+    const items = dedupedResults.map((r, idx) => {
         const relevance = (1 - r.distance).toFixed(2);
         const source = r.chunk.sourcePath.replace(/^.*\/\.openclaw\/workspace\//, '');
         return `[${idx + 1}] (來源: ${source}, 相關度: ${relevance})
@@ -51,9 +64,16 @@ function extractUserQuery(event) {
     }
     return null;
 }
+// 只對這些 agents 啟用 RAG 注入（其他 agents 有自己嘅 workspace 同身份）
+const ALLOWED_AGENTS = ['main', 'main-lite'];
 const handler = async (event, ctx) => {
     const startTime = Date.now();
     try {
+        // 檢查是否為允許的 agent
+        if (!ALLOWED_AGENTS.includes(ctx.agentId)) {
+            console.log(`[rag-inject] 跳過 agent "${ctx.agentId}"（只對 main/main-lite 啟用）`);
+            return;
+        }
         // 提取用戶查詢
         const userQuery = extractUserQuery(event);
         if (!userQuery || userQuery.length < MIN_QUERY_LENGTH) {

@@ -21,7 +21,7 @@ const getCriticalContextPath = (workspaceDir) => join(workspaceDir, '.memory-gua
 const getDailyReportPath = (workspaceDir) => join(workspaceDir, 'reports', 'daily_report_latest.md');
 /**
  * 從 Transcript 文件中提取最近的消息
- * OpenClaw 的 transcript 格式：JSONL
+ * OpenClaw 的 transcript 格式：JSONL (type="message", message={role, content})
  */
 function extractRecentMessages(transcriptPath, count = 30) {
     if (!existsSync(transcriptPath)) {
@@ -36,9 +36,29 @@ function extractRecentMessages(transcriptPath, count = 30) {
         for (const line of recentLines) {
             try {
                 const entry = JSON.parse(line);
-                if (entry.role && entry.content) {
-                    const roleLabel = entry.role === 'user' ? 'User' : 'Assistant';
-                    messages.push(`[${roleLabel}]: ${entry.content.slice(0, 500)}`);
+                // OpenClaw format: {"type":"message","message":{"role":"...","content":...}}
+                if (entry.type === 'message' && entry.message) {
+                    const role = entry.message.role;
+                    const contentData = entry.message.content;
+                    if (role && contentData) {
+                        const roleLabel = role === 'user' ? 'User' : 'Assistant';
+                        // content 可能是 string 或 array of content parts
+                        let textContent;
+                        if (typeof contentData === 'string') {
+                            textContent = contentData;
+                        }
+                        else if (Array.isArray(contentData)) {
+                            // Extract text from content parts
+                            textContent = contentData
+                                .filter((part) => part.type === 'text' && part.text)
+                                .map((part) => part.text)
+                                .join(' ');
+                        }
+                        else {
+                            textContent = JSON.stringify(contentData);
+                        }
+                        messages.push(`[${roleLabel}]: ${textContent.slice(0, 500)}`);
+                    }
                 }
             }
             catch {

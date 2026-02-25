@@ -4,7 +4,7 @@
  * 產生 384 維特徵向量
  */
 import { pipeline } from '@xenova/transformers';
-// Singleton pipeline instance
+// Singleton pipeline instance - use any to avoid type mismatch
 let embeddingPipeline = null;
 let initPromise = null;
 /**

@@ -28,7 +28,7 @@ const getDailyReportPath = (workspaceDir: string) =>
 
 /**
  * 從 Transcript 文件中提取最近的消息
- * OpenClaw 的 transcript 格式：JSONL
+ * OpenClaw 的 transcript 格式：JSONL (type="message", message={role, content})
  */
 function extractRecentMessages(
   transcriptPath: string,
@@ -49,9 +49,30 @@ function extractRecentMessages(
     for (const line of recentLines) {
       try {
         const entry = JSON.parse(line);
-        if (entry.role && entry.content) {
-          const roleLabel = entry.role === 'user' ? 'User' : 'Assistant';
-          messages.push(`[${roleLabel}]: ${entry.content.slice(0, 500)}`);
+        // OpenClaw format: {"type":"message","message":{"role":"...","content":...}}
+        if (entry.type === 'message' && entry.message) {
+          const role = entry.message.role;
+          const contentData = entry.message.content;
+          
+          if (role && contentData) {
+            const roleLabel = role === 'user' ? 'User' : 'Assistant';
+            
+            // content 可能是 string 或 array of content parts
+            let textContent: string;
+            if (typeof contentData === 'string') {
+              textContent = contentData;
+            } else if (Array.isArray(contentData)) {
+              // Extract text from content parts
+              textContent = contentData
+                .filter((part: any) => part.type === 'text' && part.text)
+                .map((part: any) => part.text)
+                .join(' ');
+            } else {
+              textContent = JSON.stringify(contentData);
+            }
+            
+            messages.push(`[${roleLabel}]: ${textContent.slice(0, 500)}`);
+          }
         }
       } catch {
         // 跳過無效的 JSON 行
